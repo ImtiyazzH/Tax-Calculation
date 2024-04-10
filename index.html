@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tax Calculator</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body {
+      background-image: url('https://source.unsplash.com/random');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: #fff;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 50px;
+    }
+    .container {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 30px;
+    }
+    .form-group label {
+      color: #fff;
+      position: relative;
+    }
+    .form-control {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+    .btn-primary {
+      background-color: #007bff;
+      border-color: #007bff;
+    }
+    .btn-primary:hover {
+      background-color: #0056b3;
+      border-color: #0056b3;
+    }
+    .modal-content {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #fff;
+    }
+    .tooltip-text {
+      visibility: hidden;
+      width: 150px;
+      background-color: #000;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -75px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .tooltip-text::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #000 transparent transparent transparent;
+    }
+    .form-group label:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tax Calculator</h1>
+    <form id="taxForm">
+      <div class="form-group">
+        <label for="grossIncome">Gross Annual Income:
+          <span class="tooltip-text">Gross Annual Income refers to the total amount of money earned over the course of one year before any deductions or taxes are taken out.</span>
+        </label>
+        <input type="number" class="form-control" id="grossIncome" name="grossIncome">
+        <span class="error-icon" id="grossIncomeError" title="Please enter a valid number!">!</span>
+      </div>
+      <div class="form-group">
+        <label for="extraIncome">Extra Income:
+          <span class="tooltip-text">Extra Income refers to any additional income earned beyond the primary source of income, such as bonuses, investment dividends, or rental income.</span>
+        </label>
+        <input type="number" class="form-control" id="extraIncome" name="extraIncome">
+        <span class="error-icon" id="extraIncomeError" title="Please enter a valid number!">!</span>
+      </div>
+      <div class="form-group">
+        <label for="deductions">Deductions:
+          <span class="tooltip-text">Deductions refer to certain expenses or amounts that are subtracted from the gross income to arrive at the net income, reducing the taxable income. Common deductions include contributions to retirement accounts or expenses related to business activities.</span>
+        </label>
+        <input type="number" class="form-control" id="deductions" name="deductions">
+        <span class="error-icon" id="deductionsError" title="Please enter a valid number!">!</span>
+      </div>
+      <div class="form-group">
+        <label for="age">Age:
+          <span class="tooltip-text">Age determines the tax rate applicable to your income. Different age groups have different tax rates according to the provided formula.</span>
+        </label>
+        <select class="form-control" id="age" name="age">
+          <option value="<40">&lt;40</option>
+          <option value=">=40&<60">&ge;40 &amp; &lt;60</option>
+          <option value=">=60">&ge;60</option>
+        </select>
+        <span class="error-icon" id="ageError" title="Please select an age group!">!</span>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Submit</button>
+    </form>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resultModalLabel">Tax Calculation Result</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="closeModal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="resultText"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    $(document).ready(function() {
+      $('#taxForm').submit(function(event) {
+        event.preventDefault();
+        $('.error-icon').hide();
+        var grossIncome = parseFloat($('#grossIncome').val());
+        var extraIncome = parseFloat($('#extraIncome').val());
+        var deductions = parseFloat($('#deductions').val());
+        var age = $('#age').val();
+        var tax = 0;
+
+        if (isNaN(grossIncome) || isNaN(extraIncome) || isNaN(deductions)) {
+          $('.error-icon').show();
+          return;
+        }
+
+        if (age === "") {
+          $('#ageError').show();
+          return;
+        }
+
+        var netIncome = grossIncome + extraIncome - deductions;
+        if (netIncome <= 800000) {
+          tax = 0;
+        } else {
+          var taxableAmount = netIncome - 800000;
+          if (age === "<40") {
+            tax = taxableAmount * 0.3;
+          } else if (age === ">=40&<60") {
+            tax = taxableAmount * 0.4;
+          } else {
+            tax = taxableAmount * 0.1;
+          }
+        }
+
+        var overallIncome = netIncome - tax;
+        $('#resultText').text("The overall income will be " + overallIncome.toFixed(2) + " after tax reductions");
+        $('#resultModal').modal('show');
+      });
+
+      $('#closeModal').on('click', function() {
+        $('#resultModal').modal('hide');
+        $('#taxForm')[0].reset();
+      });
+    });
+  </script>
+</body>
+</html>
